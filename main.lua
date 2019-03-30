@@ -52,6 +52,10 @@ function love.load(arg)
 		shoot = love.audio.newSource("shoot.mp3", "static")
 		smallExplosion = love.graphics.newImage("assets/exp4.png")
 
+	
+	-- This is a tentative solution to inserting waves into the game and should probably be cleaned up with a function that takes
+	-- care of it.
+	
 	wave1 = {enemyList = {},
 			 time = 0, maxEnemies = 4}
 			
@@ -74,24 +78,8 @@ function love.load(arg)
 end -- end love.load()
 
 function love.update(dt)
-	-- for testing purposes until waves are implemented, spawn one enemy
-	-- then spawn nothing else
-
-	--createEnemyTimer = createEnemyTimer - (1 * dt)
-	--if createEnemyTimer < 0 then
-	--	if noEnemy then
-	--		enemy = new_enemy(200, -10, 38, 40, enemyImg, 10)
-	--		table.insert(enemies, enemy)
-	--		enemy = new_enemy(300, -10, 38, 40, enemyImg, 10)
-	--		table.insert(enemies, enemy)
-	--		enemy = new_enemy(100, -10, 38, 40, enemyImg, 10)
-	--		table.insert(enemies, enemy)
-	--		enemy = new_enemy(400, -10, 38, 40, enemyImg, 10)
-	--		table.insert(enemies, enemy)
-	--
-	--		noEnemy = false
-	--	end
-	--end
+	
+	-- If enemies have been spawned, start checking for enemies all being destroyed / gone from screen to progress to next wave
 	if allEnemiesSpawned == 1 then
 		if next(enemies) == nil then
 			currentWave = currentWave + 1
@@ -111,24 +99,23 @@ function love.update(dt)
 		end
 	end
 
-	-- is this creating the shooting bug?
+	-- is this creating the shooting bug? (middle, thick bullet will sometimes increase in Y value, as much as its height
 	canShootTimer = canShootTimer - (1 * dt)
 	if canShootTimer < 0 then
   		canShoot = true
 	end
-
+	
+	-- Update animation time values
 	for _, animation in pairs(animations) do
 		animation.currentTime = animation.currentTime + dt
-    	if animation.currentTime >= animation.duration then
-        	animation.currentTime = animation.currentTime - animation.duration
-    	end
+    		if animation.currentTime >= animation.duration then
+        		animation.currentTime = animation.currentTime - animation.duration
+    		end
 	end
 	
-
+	-- main bulk of code affecting game happens in these functions
 	handleInput(dt)
-
 	updateEnemies(dt)
-
 	updateBullets(dt)
 
 	-- Pause the game, delete bullets, (should also delete enemies)
@@ -136,6 +123,7 @@ function love.update(dt)
 	-- if no lives are left, "CONTINUE?" countdown until credit added or game over
 	if not isAlive and love.keyboard.isDown('r') then
 		bullets = {}
+		enemies = {}
 		canShootTimer = canShootTimerMax
 		player.x = 200
 		player.y = 600
@@ -156,22 +144,22 @@ function love.draw(dt)
 	end
 
 	drawBullets()
-
 	drawEnemies()
-
 	drawValues() 
 
 	for i, animation in ipairs(animations) do
 		local spriteNum = math.floor(animation.currentTime / animation.duration * #animation.quads) + 1
    		love.graphics.draw(animation.spriteSheet, animation.quads[spriteNum], animation.x, animation.y, 0, 4)
-    	if (spriteNum == animation.maxSprites) then
-    		table.remove(animations, i)
-    	end
+    		if (spriteNum == animation.maxSprites) then
+    			table.remove(animations, i)
+    		end
 	end
 	
 
 end -- End love.draw()
 
+
+-- TODO - amend this to create waves properly
 --function new_wave(...)
 --	wave = {
 --		time = 0,
