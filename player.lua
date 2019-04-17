@@ -4,19 +4,19 @@ function handle_input(Dt)
 		love.event.push('quit')
 	end
 
-	-- Pressing Z creates a spread shot of bullets
-	-- Pressing X creates a focused straight shot of bullets
+	-- Pressing Z creates a spread shot of player_bullets
+	-- Pressing X creates a focused straight shot of player_bullets
 	if love.keyboard.isDown('z') and can_shoot then
-	-- Create some bullets
+	-- Create some player_bullets
 	-- TODO - possibly turn these into seperate functions
 		bullet_x = (player.x - (player.img:getWidth()) / 2) + 13
 		bullet_y = (player.y - (player.img:getHeight()) / 2) - 15
 		bullet = new_bullet(bullet_x, bullet_y, 0, 900, 1)
-		table.insert(bullets, bullet)
+		table.insert(player_bullets, bullet)
 		bullet = new_bullet(bullet_x + 25, bullet_y, 250, 900, 2)
-		table.insert(bullets, bullet)
+		table.insert(player_bullets, bullet)
 		bullet = new_bullet(bullet_x - 10, bullet_y, -250, 900, 2)
-		table.insert(bullets, bullet)
+		table.insert(player_bullets, bullet)
 		can_shoot = false
 		can_shoot_timer = can_shoot_timer_max
 		-- Play shooting sound effect
@@ -25,11 +25,11 @@ function handle_input(Dt)
 		bullet_x = (player.x - (player.img:getWidth()) / 2) + 13
 		bullet_y = (player.y - (player.img:getHeight()) / 2) - 15
 		bullet = new_bullet(bullet_x, bullet_y, 0, 900, 1)
-		table.insert(bullets, bullet)
+		table.insert(player_bullets, bullet)
 		bullet = new_bullet(bullet_x + 25, bullet_y, 0, 900, 2)
-		table.insert(bullets, bullet)
+		table.insert(player_bullets, bullet)
 		bullet = new_bullet(bullet_x - 15, bullet_y, 0, 900, 2)
-		table.insert(bullets, bullet)
+		table.insert(player_bullets, bullet)
 		can_shoot = false
 		can_shoot_timer = can_shoot_timer_max
 		-- Play shooting sound effect
