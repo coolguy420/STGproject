@@ -35,25 +35,29 @@ function love.load(arg)
 	is_alive = true
 	score = 0
 	lives = 3
-	respawn_timer = 0
+	respawn_timer = 0	
+	respawning = false
+	limiter = true
+	scroll_y = -4360
 	-- Load media for player/enemies/player_bullets
 	load_media()
 
 	wave_1 = create_wave(1)
-	add_enemy(200, 10, 1, 100, wave_1)
+	add_enemy(200, 10, 1, 50, wave_1)
 	table.insert(waves, wave_1)
 	wave_2 = create_wave(1)
-	add_enemy(50, -50, 2, 50, wave_2)
+	add_enemy(200, -50, 3, 50, wave_2)
 	table.insert(waves, wave_2)
+	wave_3 = create_wave(1)
+	add_enemy(200, -50, 1, 50, wave_3)
+	table.insert(waves, wave_3)
 
 end -- end love.load()
 
 function love.update(dt)
 	-- for testing purposes until waves are implemented, spawn one enemy
 	-- then spawn nothing else
-	if not is_alive then
-		can_shoot = false
-	else
+	if is_alive then
 		if all_enemies_spawned == 1 then
 			if next(enemies) == nil then
 				current_wave = current_wave + 1
@@ -62,6 +66,11 @@ function love.update(dt)
 			end
 		else
 			waves[current_wave].time = waves[current_wave].time + 1
+			scroll_y = scroll_y + 5
+			if scroll_y == 0 then
+				scroll_y = -4360
+			end
+
 			for _, enemy in pairs(waves[current_wave].enemy_list) do
 				if (enemy.time == waves[current_wave].time) then
 					enemy = new_enemy(enemy.x, enemy.y, enemy.type)
@@ -73,34 +82,53 @@ function love.update(dt)
 				end
 			end
 		end
-
-		-- is this creating the shooting bug?
-		can_shoot_timer = can_shoot_timer - (1 * dt)
-		if can_shoot_timer < 0 then
-	  		can_shoot = true
-		end
-
+	
 		handle_input(dt)
 		update_enemies(dt)
 		update_player_bullets(dt)
 		update_enemy_bullets(dt)
+	end
+	
 
-	end -- end game updates
+	can_shoot_timer = can_shoot_timer - (1 * dt)
+	if can_shoot_timer < 0 then
+	  	can_shoot = true
+	end
+
+	
 
 	-- Pause the game, delete player_bullets, (should also delete enemies)
 	-- TODO - temporary invincibility after pressing R, lose a life,
 	-- if no lives are left, "CONTINUE?" countdown until credit added or game over
-	if not is_alive and love.keyboard.isDown('r') then
-		player_bullets = {}
-		can_shoot_timer = can_shoot_timer_max
-		player.x = 200
-		player.y = 600
-		player.box.x = 195
-		player.box.y = 595
-		score = 0
-		is_alive = true
-		can_shoot = true
+	if respawning then
+		can_shoot = false
+		respawn_timer = respawn_timer + 1
+		if respawn_timer == 50 then
+			if lives > 0 then
+				respawn:play()
+			else
+				respawning = false
+				animation = new_animation(love.graphics.newImage("assets/exp5.png"), 50, 50, 1, player.x - 100, player.y -100, 32)
+				table.insert(animations, animation)
+				player_die:play()
+			end
+		end
+
+		if respawn_timer < 200 and respawn_timer > 50 then
+			respawn_timer = respawn_timer + 1
+			is_alive = true
+			invincible = true
+			can_shoot = true
+		end
+
+		if respawn_timer == 200 then
+			wore_off:play()
+			respawning = false
+			respawn_timer = 0
+			invincible = false
+		end
 	end
+	
 
 	for _, animation in pairs(animations) do
 		animation.current_time = animation.current_time + dt
@@ -111,11 +139,10 @@ function love.update(dt)
 end -- End love.update()
 
 function love.draw(dt)
-	if is_alive then
+	love.graphics.draw(bg, 0, scroll_y)
+
+	if is_alive or respawning then
 		draw_player()
-	else
-		can_shoot = false
-		love.graphics.print("Press 'R' to restart", love.graphics:getWidth()/2-50, love.graphics:getHeight()/2-10)
 	end
 
 	draw_player_bullets()
@@ -132,10 +159,6 @@ function love.draw(dt)
 	end
 	
 end -- End love.draw()	
-
--- TODO - make function with variable hitboxes OR make specific functions
--- for enemy types OR modify new_single_box_enemy to take an enemy type
--- which creates specific enemy and returns it. I like the last idea
 
 function is_colliding(box_a, boxB)
 	-- Takes two boxes top left / top right values and checks for collision
@@ -161,6 +184,12 @@ end
 
 function draw_player()
 	-- Draws ship image and player's collision box (smaller rectangle inside the ship)
+	if respawn_timer > 50 then
+		love.graphics.setColor(0, 255, 0)
+	else
+		love.graphics.setColor(255, 255, 255)
+	end
+
 	if player.velocity.x < 0 then
 		love.graphics.draw(player.img_l, (player.x - player.img_l:getWidth() / 2) + 4, (player.y - player.img_l:getHeight() /2) + 4)
 	elseif player.velocity.x > 0 then
@@ -221,7 +250,10 @@ function draw_values()
 	end		
 
 	love.graphics.print("all_enemies_spawned: " .. all_enemies_spawned, 50, 50)
-
+	love.graphics.print("respawn_timer: " .. respawn_timer, 50, 65)
+	love.graphics.print("lives: " .. lives, 50, 80)
+	love.graphics.print("is alive: " .. tostring(is_alive), 50, 95)
+	love.graphics.print("score: " .. score, 50, 110)
 	love.graphics.setColor(255, 255, 255)
 end
 
@@ -257,8 +289,14 @@ function load_media()
 	small_explosion = love.graphics.newImage("assets/exp4.png")
 	player_explode = love.graphics.newImage("assets/exp5.png")
 	enemy_bullet = love.graphics.newImage("assets/bullet3.png")
+	bg = love.graphics.newImage("assets/bg.png")
 
 	-- audio
 	shoot = love.audio.newSource("shoot.mp3", "static")
+	player_hit = love.audio.newSource("die.wav", "static")
 	player_die = love.audio.newSource("die3.wav", "static")
+	respawn = love.audio.newSource("respawn.wav", "static")
+	wore_off = love.audio.newSource("wore_off.wav", "static")
+	charge_lazer = love.audio.newSource("charge.ogg", "static")
+	lazer_fire = love.audio.newSource("lazer2.wav", "static")
 end

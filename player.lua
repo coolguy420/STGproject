@@ -11,11 +11,11 @@ function handle_input(Dt)
 	-- TODO - possibly turn these into seperate functions
 		bullet_x = (player.x - (player.img:getWidth()) / 2) + 13
 		bullet_y = (player.y - (player.img:getHeight()) / 2) - 15
-		bullet = new_bullet(bullet_x, bullet_y, 0, 900, 1)
+		bullet = new_bullet(bullet_x, bullet_y, 0, 900, "thick_bullet")
 		table.insert(player_bullets, bullet)
-		bullet = new_bullet(bullet_x + 25, bullet_y, 250, 900, 2)
+		bullet = new_bullet(bullet_x + 25, bullet_y, 250, 900, "thin_bullet")
 		table.insert(player_bullets, bullet)
-		bullet = new_bullet(bullet_x - 10, bullet_y, -250, 900, 2)
+		bullet = new_bullet(bullet_x - 10, bullet_y, -250, 900, "thin_bullet")
 		table.insert(player_bullets, bullet)
 		can_shoot = false
 		can_shoot_timer = can_shoot_timer_max
@@ -24,11 +24,11 @@ function handle_input(Dt)
 	elseif love.keyboard.isDown('x') and can_shoot then
 		bullet_x = (player.x - (player.img:getWidth()) / 2) + 13
 		bullet_y = (player.y - (player.img:getHeight()) / 2) - 15
-		bullet = new_bullet(bullet_x, bullet_y, 0, 900, 1)
+		bullet = new_bullet(bullet_x, bullet_y, 0, 900, "thick_bullet")
 		table.insert(player_bullets, bullet)
-		bullet = new_bullet(bullet_x + 25, bullet_y, 0, 900, 2)
+		bullet = new_bullet(bullet_x + 25, bullet_y, 0, 900, "thin_bullet")
 		table.insert(player_bullets, bullet)
-		bullet = new_bullet(bullet_x - 15, bullet_y, 0, 900, 2)
+		bullet = new_bullet(bullet_x - 15, bullet_y, 0, 900, "thin_bullet")
 		table.insert(player_bullets, bullet)
 		can_shoot = false
 		can_shoot_timer = can_shoot_timer_max
@@ -72,3 +72,12 @@ function handle_input(Dt)
 	end
 	
 end -- end handleInput
+
+function die()
+	if is_alive and not invincible then
+		lives = lives - 1
+		is_alive = false
+		player_hit:play()	
+		respawning = true
+	end
+end

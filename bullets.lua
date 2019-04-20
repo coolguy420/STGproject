@@ -1,69 +1,44 @@
 function new_bullet(init_x, init_y, velocity_x, velocity_y, type)
 	-- type 1 is a thicker bullet that has a wider but shorter hitbox
 	-- type 2 is a thinner bullet that has a longer but less wide hitbox
-	if(type == 1) then
-		newBullet = { 
-			x = init_x, 
-			y = init_y,
-			velocity ={
-				x = velocity_x,
-				y = velocity_y
-			},
-			box = {
-				x = init_x,
-				y = init_y,
-				h = 32,
-				w = 22
-			},
-			img = thick_bullet_img,
-			type = 1
-		}
-	elseif(type == 2) then
-		newBullet = { 
-			x = init_x, 
-			y = init_y,
-			velocity ={
-				x = velocity_x,
-				y = velocity_y
-			},
-			box = {
-				x = init_x,
-				y = init_y,
-				h = 40,
-				w = 12
-			},
-			img = thin_bullet_img,
-			type = 2
-		}
-	elseif(type == 3) then
-		newBullet = { 
-			x = init_x, 
-			y = init_y,
-			velocity ={
-				x = velocity_x,
-				y = velocity_y
-			},
-			box = {
-				x = init_x,
-				y = init_y,
-				h = 26,
-				w = 26
-			},
-			img = enemy_bullet,
-			type = 3
-		}
+	if type == "thick_bullet" then
+		box = { x = init_x, y = init_y, h = 32, w = 22 }
+		img = thick_bullet_img
+	elseif type == "thin_bullet" then
+		box = { x = init_x, y = init_y, h = 40, w = 12 }
+		img = thin_bullet_img
+	elseif type == "enemy_bullet" then
+		box = { x = init_x, y = init_y, h = 26, w = 26 }
+		img = enemy_bullet
+	elseif type == "spiral" then
+		box = { x = init_x, y = init_y, h = 26, w = 26 }
+		img = enemy_bullet
+		type = "spiral"
 	end
-	return newBullet
+
+	bullet = { 
+		x = init_x, 
+		y = init_y,
+		velocity = {
+		x = velocity_x,
+		y = velocity_y
+		},
+		box = box,
+		img = img,
+		type = type
+	}
+	
+	return bullet
 end
 
-function fire(x, y, target_x, target_y, speed, type)
+function fire(x, y, target_x, target_y, speed, type, destination_table)
 	Dx = target_x - x
 	Dy = target_y - y
 	D = math.sqrt((Dx * Dx) + (Dy * Dy))
 	bullet = new_bullet(x, y, (Dx / D) * speed, ((Dy / D) * speed) * -1, type)
-	if type == 3 then
+	if destination_table == 1 then
 		table.insert(enemy_bullets, bullet)
-	elseif type == 2 or type == 1 then
+	elseif destination_table == 2 then
 		table.insert(player_bullets, bullet)
 	end
 end
@@ -95,23 +70,21 @@ end -- updateBullets
 
 function update_enemy_bullets(Dt)
 	for i, bullet in ipairs(enemy_bullets) do
+		if bullet.type == "spiral" then
+			bullet.velocity.x = bullet.velocity.x * math.cos(1) - bullet.velocity.y * math.sin(1)
+			bullet.velocity.y = bullet.velocity.x * math.sin(1) - bullet.velocity.y * math.cos(2401)
+		end
 		bullet.x = bullet.x + (bullet.velocity.x * Dt)
 		bullet.y = bullet.y - (bullet.velocity.y * Dt)
 		bullet.box.x = bullet.box.x + (bullet.velocity.x * Dt)
 		bullet.box.y = bullet.box.y - (bullet.velocity.y * Dt)
 
 		if is_colliding(bullet.box, player.box) then
-			if is_alive == true then
-				is_alive = false
-				animation = new_animation(love.graphics.newImage("assets/exp5.png"), 50, 50, 1, player.x - 100, player.y -100, 32)
-				table.insert(animations, animation)
-				player_die:play()
-			end
-			-- TODO make a "die" function that takes care of death like a real shmup game
+				die()
 		end
 
-  		if bullet.y > 650 then -- remove bullets when they pass off the screen
-		table.remove(enemy_bullets, i)
+  		if bullet.y > 650 or bullet.x > 480 or bullet.x < -10 then -- remove bullets when they pass off the screen
+			table.remove(enemy_bullets, i)
 		end
 	end
 end -- updateBullets

@@ -9,8 +9,10 @@ end
 
 function add_enemy(x, y, type, time, wave)
 	if type == 1 then
-		table.insert(wave.enemy_list, {x = x, y = y, type = 1, time = time})
+		table.insert(wave.enemy_list, {x = x, y = y, type = type, time = time})
 	elseif type == 2 then
-		table.insert(wave.enemy_list, {x = x, y = y, type = 2, time = time})
+		table.insert(wave.enemy_list, {x = x, y = y, type = type, time = time})
+	elseif type == 3 then
+		table.insert(wave.enemy_list, {x = x, y = y, type = type, time = time})
 	end
 end
